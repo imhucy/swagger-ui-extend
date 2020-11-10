@@ -5,17 +5,18 @@
   "scripts": {
     "build": "gulp build --color",
     "dev": "gulp --color",
-    "format": "gulp --color format"
+    "format": "gulp --color format",
+    "save": "git push github master && git push gitee master"
   },
   "devDependencies": {
-    "autoprefixer": "^10.0.1",
+    "autoprefixer": "^8.0.1",
     "colors": "^1.4.0",
     "css-loader": "^4.3.0",
     "cssnano": "^4.1.10",
     "gulp": "^4.0.2",
     "gulp-prettier": "^3.0.0",
     "moment": "^2.29.0",
-    "postcss-loader": "^4.0.2",
+    "postcss-loader": "^4.0.4",
     "prettier": "^2.1.2",
     "terser-webpack-plugin": "^4.2.2",
     "to-string-loader": "^1.1.6",

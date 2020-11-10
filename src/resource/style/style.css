@@ -1,8 +1,54 @@
-body {
-  font-size: 2rem;
-  display: flex;
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
 }
-
-div {
-  background-color: #fff;
+.swagger-ui {
+  padding-top: 60px;
+}
+.op-btn {
+  position: fixed;
+  top: 160px;
+  right: 20px;
+  width: 160px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  background: lightblue;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.op-btn:hover {
+  opacity: 0.8;
+}
+.message {
+  position: fixed;
+  top: 50px;
+  background: lightblue;
+  padding: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+#search-input {
+  height: 40px;
+  width: 400px;
+}
+.search-result {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  width: 240px;
+  padding: 0 15px;
+  box-shadow: 0 0 10px #444;
+  background: #fff;
+}
+.search-result-item {
+  cursor: pointer;
+  padding: 10px 0;
+  margin: 0;
+}
+.search-result-item:hover {
+  background: #eee;
 }
