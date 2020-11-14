@@ -106,7 +106,9 @@ btns.forEach(function (conf) {
   }
   document.body.appendChild(div);
 });
-
+let host = location.host;
+let cacheName = 'cache://' + host;
+let cache = GM_getValue(cacheName, {});
 function createInput(key) {
   let input = document.createElement('input');
   input.className = 'export-name-input';

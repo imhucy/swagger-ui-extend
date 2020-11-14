@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SVGBtn</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 30px;
+      }
+      .svg-button {
+        display: inline-flex;
+        height: 32px;
+        width: auto;
+        position: relative;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        cursor: pointer;
+      }
+      .svg-button svg {
+        width: 100%;
+        height: 32px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+      .svg-button .svg-text {
+        padding: 0 20px;
+        line-height: 32px;
+        transition: all 0.4s;
+      }
+      .svg-button:hover .svg-text {
+        color: rgb(134, 121, 247);
+      }
+      .svg-button .border {
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke-width: 2px;
+        stroke: #000;
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .svg-button:hover .border {
+        stroke: rgb(134, 121, 247);
+        stroke-width: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+      function createBtn(text, container) {
+        let btn = $(`
+          <div class="svg-button">
+            <svg xmlns="http://www.w3.org/2000/svg">
+              <path class="border" stroke-linejoin="round" d="" />
+            </svg>
+            <div class="svg-text">${text}</div>
+          </div>
+        `);
+        btn.appendTo(container);
+        let path = btn.find('.border');
+        let w = btn.width();
+        let h = btn.height();
+        path.attr(
+          'd',
+          `M${w / 2} 1 L${w - 1} 1 L${w - 1} ${h - 1} L1 ${h - 1} L1 1 Z`
+        );
+        let length = path.get(0).getTotalLength();
+        path.css('stroke-dasharray', length);
+        path.css('stroke-dashoffset', length);
+        btn.mouseleave(function () {
+          path.css('stroke-dashoffset', length);
+        });
+        btn.mouseenter(function () {
+          path.css('stroke-dashoffset', 0);
+        });
+        return btn;
+      }
+      createBtn('按钮文字1', 'body');
+      createBtn('按钮文字2按钮文字2', 'body');
+      createBtn('按钮文字3按钮文字3按钮文字3', 'body');
+      createBtn('按钮文字4按钮文字4按钮文字4按钮文字4', 'body');
+      createBtn('按钮文字5按钮文字5按钮文字5按钮文字5按钮文字5', 'body');
+    </script>
+  </body>
+</html>
