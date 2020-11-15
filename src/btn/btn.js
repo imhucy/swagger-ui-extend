@@ -11,10 +11,7 @@ module.exports = function createBtn(text, container) {
   let path = btn.find('.border');
   let w = btn.width();
   let h = btn.height();
-  path.attr(
-    'd',
-    `M${w / 2} 1 L${w - 1} 1 L${w - 1} ${h - 1} L1 ${h - 1} L1 1 Z`
-  );
+  path.attr('d', `M${w / 2} 1 L${w - 1} 1 L${w - 1} ${h - 1} L1 ${h - 1} L1 1 Z`);
   let length = path.get(0).getTotalLength();
   path.css('stroke-dasharray', length);
   path.css('stroke-dashoffset', length);

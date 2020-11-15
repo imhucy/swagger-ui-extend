@@ -72,11 +72,7 @@ function search() {
     var desc = item.description || '';
     var tags = item.tags && item.tags.join();
     tags = tags || '';
-    if (
-      path.includes(keyword) ||
-      desc.includes(keyword) ||
-      tags.includes(keyword)
-    ) {
+    if (path.includes(keyword) || desc.includes(keyword) || tags.includes(keyword)) {
       rs.push({ tags, path });
     }
   });
@@ -84,12 +80,10 @@ function search() {
   rs = uniq(rs, 'path');
   // 添加到页面显示
   rs.forEach(function ({ tags, path }, i) {
-    var $link = $(
-      `<h4 class="search-result-item" href="#/${tags}">${tags}</h4>`
-    );
+    var $link = $(`<h4 class="search-result-item" href="#/${tags}">${tags}</h4>`);
     $link.data('path', path);
     $link.css('display', 'none');
     $searchResult.append($link);
-    $link.delay(i * 60).show('fast');
+    $link.delay(i * 40).show('fast');
   });
 }
