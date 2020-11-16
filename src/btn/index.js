@@ -8,7 +8,7 @@ const onCopyTableConfig = require('./copy-table-config');
 const { onCopyApiConfig, getApiConfig, onApiNameChange, getName } = require('./copy-api-config');
 const onCopyForm = require('./copy-form');
 const onCopyFormConfig = require('./copy-form-config');
-const dataProtocol = 'apidoc-data://' + location.host;
+const onCopyFormVantConfig = require('./copy-form-vant-config');
 
 module.exports = function () {
   $(window).on('DOMNodeInserted', onInserted);
@@ -34,7 +34,7 @@ function initGlobalBtns() {
   });
 
   createBtn('清除文档缓存数据', $navBtns).click(function () {
-    GM_setValue(dataProtocol, '');
+    GM_setValue('data', '');
     message('已清除 缓存数据');
   });
 }
@@ -46,7 +46,7 @@ function onInserted(e) {
       let $this = $(this);
       let path = $this.text().trim();
       let $box = $('<div class="opblock-extend-btns">');
-      $this.parents('.opblock-summary').before($box);
+      $this.parents('.opblock-summary').append($box);
 
       $('<input style="margin-right:10px" />')
         .appendTo($box)
@@ -59,6 +59,7 @@ function onInserted(e) {
       createBtn('复制 Table Config', $box).click(onCopyTableConfig(path));
       createBtn('复制 Form', $box).click(onCopyForm(path));
       createBtn('复制 Form Config', $box).click(onCopyFormConfig(path));
+      createBtn('复制 FormVant Config', $box).click(onCopyFormVantConfig(path));
     });
 }
 
