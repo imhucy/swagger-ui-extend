@@ -8,6 +8,7 @@ const onCopyTableConfig = require('./copy-table-config');
 const { onCopyApiConfig, getApiConfig, onApiNameChange, getName } = require('./copy-api-config');
 const onCopyForm = require('./copy-form');
 const onCopyFormConfig = require('./copy-form-config');
+const dataProtocol = 'apidoc-data://' + location.host;
 
 module.exports = function () {
   $(window).on('DOMNodeInserted', onInserted);
@@ -33,7 +34,7 @@ function initGlobalBtns() {
   });
 
   createBtn('清除文档缓存数据', $navBtns).click(function () {
-    GM_setValue('data', '');
+    GM_setValue(dataProtocol, '');
     message('已清除 缓存数据');
   });
 }
@@ -45,7 +46,7 @@ function onInserted(e) {
       let $this = $(this);
       let path = $this.text().trim();
       let $box = $('<div class="opblock-extend-btns">');
-      $this.parents('.opblock-summary').append($box);
+      $this.parents('.opblock-summary').before($box);
 
       $('<input style="margin-right:10px" />')
         .appendTo($box)

@@ -131,6 +131,8 @@
 }
 .opblock-extend-btns {
   padding-left: 10px;
+  padding-top: 8px;
+  padding-bottom: 10px;
 }
 .opblock-extend-btns input {
   height: 32px;
