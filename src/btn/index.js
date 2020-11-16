@@ -9,7 +9,7 @@ const { onCopyApiConfig, getApiConfig, onApiNameChange, getName } = require('./c
 const onCopyForm = require('./copy-form');
 const onCopyFormConfig = require('./copy-form-config');
 const onCopyFormVantConfig = require('./copy-form-vant-config');
-
+const onExportFormVue = require('./export-form-vue');
 module.exports = function () {
   $(window).on('DOMNodeInserted', onInserted);
   $(window).on('DOMNodeRemoved', onRemoved);
@@ -46,7 +46,7 @@ function onInserted(e) {
       let $this = $(this);
       let path = $this.text().trim();
       let $box = $('<div class="opblock-extend-btns">');
-      $this.parents('.opblock-summary').append($box);
+      $this.parents('.opblock-summary').before($box);
 
       $('<input style="margin-right:10px" />')
         .appendTo($box)
@@ -60,6 +60,7 @@ function onInserted(e) {
       createBtn('复制 Form', $box).click(onCopyForm(path));
       createBtn('复制 Form Config', $box).click(onCopyFormConfig(path));
       createBtn('复制 FormVant Config', $box).click(onCopyFormVantConfig(path));
+      createBtn('导出 Form Vue', $box).click(onExportFormVue(path));
     });
 }
 

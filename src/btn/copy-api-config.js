@@ -1,5 +1,6 @@
 const find = require('../utils/find');
 const message = require('../utils/message');
+const cache = require('../cache');
 
 module.exports = {
   onCopyApiConfig: function onCopyApiConfig(path) {

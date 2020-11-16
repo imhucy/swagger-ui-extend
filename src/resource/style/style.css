@@ -137,3 +137,34 @@
 .opblock-extend-btns input {
   height: 32px;
 }
+.sw-ui-extend-dialog {
+  position: fixed;
+  background-color: #ccc;
+  padding: 20px;
+  max-height: 700px;
+  min-height: 300px;
+  max-width: 100%;
+  min-width: 80%;
+  overflow: auto;
+}
+.sw-ui-extend-close-btn {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+}
+.sw-ui-extend-confirm-btn {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+}
+.sw-ui-extend-copy-btn {
+  position: absolute;
+  right: 120px;
+  bottom: 20px;
+}
+.params-config-dialog {
+}
+.params-config-dialog-table {
+}
+.global-params-config {
+}
