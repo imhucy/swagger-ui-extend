@@ -1,5 +1,6 @@
 const find = require('../utils/find');
 const message = require('../utils/message');
+const dataProtocol = 'apidoc-data://' + location.host;
 module.exports = function onCopyTableConfig(path) {
   return function (e) {
     e.stopPropagation();
@@ -12,7 +13,7 @@ module.exports = function onCopyTableConfig(path) {
       item.responses['200'].schema.$ref;
     if ($ref) {
       let key = $ref.split('/').pop();
-      let data = GM_getValue('data');
+      let data = GM_getValue(dataProtocol);
       let def = data.definitions[key];
       let content;
       if (def && def.properties) {
