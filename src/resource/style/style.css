@@ -139,32 +139,91 @@
 }
 .sw-ui-extend-dialog {
   position: fixed;
-  background-color: #ccc;
+  background-color: #fff;
   padding: 20px;
+  padding-bottom: 70px;
   max-height: 700px;
   min-height: 300px;
   max-width: 100%;
   min-width: 80%;
   overflow: auto;
+  box-shadow: 0 0 10px #333333;
+  border-radius: 10px;
+  transform: translate3d(-50%, -50%, 0);
+}
+.sw-ui-extend-dialog-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #000;
+  opacity: 0;
 }
 .sw-ui-extend-close-btn {
   position: absolute;
-  right: 20px;
-  top: 20px;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+  color: #61affe;
+}
+.sw-ui-extend-close-btn:hover {
+  opacity: 0.8;
+}
+.sw-ui-extend-confirm-btn,
+.sw-ui-extend-copy-btn {
+  padding: 5px 10px;
+  background-color: #61affe;
+  color: #fff;
+  position: absolute;
+  bottom: 20px;
+  cursor: pointer;
+}
+.sw-ui-extend-confirm-btn:hover,
+.sw-ui-extend-copy-btn:hover {
+  opacity: 0.8;
 }
 .sw-ui-extend-confirm-btn {
-  position: absolute;
   right: 20px;
-  bottom: 20px;
 }
 .sw-ui-extend-copy-btn {
-  position: absolute;
-  right: 120px;
-  bottom: 20px;
+  right: 180px;
 }
 .params-config-dialog {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
-.params-config-dialog-table {
+
+/* 弹窗内所有的输入框 */
+.params-config-dialog input {
+  padding-left: 10px;
+  height: 32px;
+  line-height: 32px;
+  margin-right: 10px;
+  width: 220px;
 }
+/* 表格上方 */
 .global-params-config {
+  margin-bottom: 10px;
+}
+/* 表格 */
+.params-config-dialog-table {
+  border-top: 1px solid #b9b9b9;
+  border-collapse: collapse;
+}
+.params-config-dialog-table tr:nth-child(2n) {
+  background-color: #e1ffff;
+}
+.params-config-dialog-table tr:hover {
+  background-color: rgba(97, 175, 254, 0.1);
+}
+.params-config-dialog-table th,
+.params-config-dialog-table td {
+  font-size: 14px;
+  text-align: left;
+  padding: 5px 10px;
+  border-bottom: 1px solid #b9b9b9;
+  vertical-align: top;
+  line-height: 32px;
 }

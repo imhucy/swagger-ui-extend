@@ -1,11 +1,21 @@
 module.exports = {
   create(content) {
     let dialog = $(`<div class="sw-ui-extend-dialog"></div>`);
+    let mask = $(`<div class="sw-ui-extend-dialog-mask"></div>`);
     let closeBtn = $(`<div class="sw-ui-extend-close-btn">关闭</div>`);
     let confirmBtn = $(`<div class="sw-ui-extend-confirm-btn">保存配置并导出</div>`);
     let copyBtn = $(`<div class="sw-ui-extend-copy-btn">保存配置并复制到剪贴板</div>`);
     closeBtn.click(function (e) {
-      dialog.remove();
+      dialog.css({
+        transform: 'translate3d(-50%, -50%, 0) scale(0)',
+        opacity: 0
+      });
+      mask.animate({ opacity: 0 }, 400, function () {
+        mask.remove();
+      });
+      setTimeout(() => {
+        dialog.remove();
+      }, 400);
     });
     dialog.append(closeBtn);
     dialog.append(content);
@@ -14,11 +24,25 @@ module.exports = {
     let height = $(window).height();
     let width = $(window).width();
     dialog.css({
-      top: height / 2 - dialog.height(),
-      left: width / 2 - dialog.width()
+      top: height / 2,
+      left: width / 2,
+      opacity: 0,
+      transition: 'all 0.4s',
+      transform: 'translate3d(-50%, -50%, 0) scale(0)'
+    });
+    mask.appendTo('body');
+    mask.animate({
+      opacity: 0.5
+    });
+    dialog.appendTo('body');
+    dialog.animate({}, function () {
+      dialog.css({
+        width: width - 40,
+        opacity: 1,
+        transform: 'translate3d(-50%, -50%, 0) scale(1)'
+      });
     });
 
-    dialog.appendTo('body');
     return { confirmBtn, copyBtn };
   },
   paramsConfigDialog(data) {
@@ -39,10 +63,10 @@ module.exports = {
       'title',
       'required',
       '组件名称(type)',
-      '默认值',
-      '长度限制',
+      '默认值(value)',
+      '长度限制(maxlength)',
       'options',
-      '字典名(仅select组件可用)'
+      '字典名(dictname)'
     ]
       .map((th) => `<th>${th}</th>`)
       .join('');
