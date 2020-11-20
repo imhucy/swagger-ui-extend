@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SwaggerUI Extends
-// @version      1.0.1
+// @version      1.0.2
 // @namespace    swagger-ui
 // @description  扩展SwaggerUI搜索功能|导出Api Config配置|导出Table Config配置|导出Form Config配置
 // @author       hucy
@@ -10,6 +10,7 @@
 //
 // @require      https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.20/lodash.min.js
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js
+// @require      https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js
 //
 // @grant        GM_addStyle
 // @grant        GM_setValue
@@ -64,7 +65,7 @@
 }([ function(module, exports, __webpack_require__) {
     const init = __webpack_require__(1);
     $((function() {
-        __webpack_require__(19).info("script loaded"), GM_addStyle(__webpack_require__(22).default.toString()), 
+        __webpack_require__(22).info("script loaded"), GM_addStyle(__webpack_require__(25).default.toString()), 
         setTimeout(init, 2e3);
     }));
 }, function(module, exports, __webpack_require__) {
@@ -169,14 +170,15 @@
         }
     };
 }, function(module, exports, __webpack_require__) {
-    const createBtn = __webpack_require__(8), message = (__webpack_require__(9), __webpack_require__(10)), downloadString = __webpack_require__(11), cache = __webpack_require__(12), onCopyPath = __webpack_require__(13), onCopyTableConfig = __webpack_require__(14), {onCopyApiConfig: onCopyApiConfig, getApiConfig: getApiConfig, onApiNameChange: onApiNameChange, getName: getName} = __webpack_require__(15), onCopyForm = __webpack_require__(16), onCopyFormConfig = __webpack_require__(17), onCopyFormVantConfig = __webpack_require__(18);
+    const createBtn = __webpack_require__(8), message = (__webpack_require__(9), __webpack_require__(10)), downloadString = __webpack_require__(11), cache = __webpack_require__(12), onCopyPath = __webpack_require__(13), onCopyTableConfig = __webpack_require__(14), {onCopyApiConfig: onCopyApiConfig, getApiConfig: getApiConfig, onApiNameChange: onApiNameChange, getName: getName} = __webpack_require__(15), onCopyForm = __webpack_require__(16), onCopyFormConfig = __webpack_require__(17), onCopyFormVantConfig = __webpack_require__(18), onExportFormVue = __webpack_require__(19);
     function onInserted(e) {
         $(e.target).find(".opblock .opblock-summary-path").each((function() {
             let $this = $(this), path = $this.text().trim(), $box = $('<div class="opblock-extend-btns">');
-            $this.parents(".opblock-summary").append($box), $('<input style="margin-right:10px" />').appendTo($box).click((e => e.stopPropagation())).change(onApiNameChange(path)).val(cache.get(path) || getName(path)), 
+            $this.parents(".opblock-summary").before($box), $('<input style="margin-right:10px" />').appendTo($box).click((e => e.stopPropagation())).change(onApiNameChange(path)).val(cache.get(path) || getName(path)), 
             createBtn("Path", $box).click(onCopyPath(path)), createBtn("Api Config", $box).click(onCopyApiConfig(path)), 
             createBtn("复制 Table Config", $box).click(onCopyTableConfig(path)), createBtn("复制 Form", $box).click(onCopyForm(path)), 
-            createBtn("复制 Form Config", $box).click(onCopyFormConfig(path)), createBtn("复制 FormVant Config", $box).click(onCopyFormVantConfig(path));
+            createBtn("复制 Form Config", $box).click(onCopyFormConfig(path)), createBtn("复制 FormVant Config", $box).click(onCopyFormVantConfig(path)), 
+            createBtn("导出 Form Vue", $box).click(onExportFormVue(path));
         }));
     }
     function onRemoved(e) {
@@ -302,19 +304,19 @@
         };
     };
 }, function(module, exports, __webpack_require__) {
-    const find = __webpack_require__(9), message = __webpack_require__(10);
-    module.exports = {
+    const find = __webpack_require__(9), message = __webpack_require__(10), cache = __webpack_require__(12);
+    var that = {
         onCopyApiConfig: function(path) {
             return function(e) {
                 e.stopPropagation();
                 let item = find.byPath(path);
                 console.log("path", path), console.log(item);
-                let content = getApiConfig(path);
+                let content = that.getApiConfig(path);
                 GM_setClipboard(content), message("已复制<br>" + content.replace(/\n/g, "<br>").replace(/ /g, "&nbsp;"));
             };
         },
         getApiConfig: function(path) {
-            let item = find.byPath(path), method = item.method, name = cache.get(path) || getName(path);
+            let item = find.byPath(path), method = item.method, name = cache.get(path) || that.getName(path);
             return `\n// @desc ${item.summary}\n// @desc ${item.tags.join("")}\n${JSON.stringify({
                 name: name,
                 method: method.toLowerCase(),
@@ -330,6 +332,7 @@
             return one + two[0].toUpperCase() + two.substr(1);
         }
     };
+    module.exports = that;
 }, function(module, exports, __webpack_require__) {
     const find = __webpack_require__(9), message = __webpack_require__(10);
     module.exports = function(path) {
@@ -396,7 +399,117 @@
         };
     };
 }, function(module, exports, __webpack_require__) {
-    const monkey = __webpack_require__(20), message = __webpack_require__(10);
+    const template = __webpack_require__(20), download = __webpack_require__(11), {getName: getName} = __webpack_require__(15), cache = __webpack_require__(12), find = __webpack_require__(9), dialog = __webpack_require__(21);
+    Handlebars.registerHelper("isstring", (function(value) {
+        return "string" == typeof value;
+    })), module.exports = function(path) {
+        return function(e) {
+            let name = cache.get(path) || getName(path), rules = function(path) {
+                let item = find.byPath(path), params = item.parameters, results = [];
+                return params ? (params.map((param => {
+                    let rs = {
+                        field: param.name,
+                        title: param.description,
+                        type: "input"
+                    };
+                    "data" === param.name && "body" === param.in && item.description.includes("<table") ? $("<div>" + item.description + "</div>").find("tbody tr").map((function() {
+                        $tr = $(this);
+                        let title = $tr.find("td:eq(0)").text().trim(), field = $tr.find("td:eq(1)").text().trim(), validate = "是" === $tr.find("td:eq(2)").text().trim() ? [ {
+                            required: !0,
+                            message: title + "是必填的"
+                        } ] : [];
+                        results.push({
+                            field: field,
+                            title: title,
+                            validate: validate,
+                            type: "input"
+                        });
+                    })) : param.required && (rs.validate = [ {
+                        required: !0,
+                        message: rs.title + "是必填的"
+                    } ], results.push(rs));
+                })), results) : message("文档里没写 params<br>该接口没有参数");
+            }(path), config = {
+                name: name,
+                name_snake_case: name.replace(/(A-Z)/g, (z => "-" + z.toLowerCase())),
+                api_add: "addForm",
+                api_edit: "editForm",
+                api_detail: "detailForm",
+                rules: rules
+            };
+            dialog.paramsConfigDialog(config).on("copy", (function(config) {
+                GM_setClipboard(JSON.stringify(config, null, "  "));
+            })).on("confirm", (function(config) {
+                const fileContent = Handlebars.compile(template)(config);
+                download(fileContent, "text/javascript", config.name + ".vue");
+            }));
+        };
+    };
+}, function(module, exports) {
+    module.exports = "<template>\n  <div class=\"form-{{name_snake_case}}\">\n    <form-create :rule=\"rule\" v-model=\"fApi\" :option=\"options\" />\n    <div class=\"form-btn\" v-if=\"type == 'edit' || type == 'insert'\">\n      <el-button type=\"primary\" plain @click=\"submit\">保存</el-button>\n      <el-button plain @click=\"reset\">重置</el-button>\n    </div>\n  </div>\n</template>\n\n<script>\nimport { mapRequest } from 'rd-http';\nexport default {\n  name: 'Form{{nameCamelCase}}',\n  props: {\n    formData: Object,\n    type: {\n      type: String,\n      // edit, insert, view\n      default: 'view'\n    }\n  },\n  data() {\n    return {\n      fApi: {},\n      options: {\n        submitBtn: false\n      },\n      rule: [\n        {{#each rules ~}}\n        {\n          type: '{{type}}',\n          field: '{{field}}',\n          title: '{{title}}',\n          validate: [\n            {{#each validate ~}}\n            { {{#each this ~}}\n            {{@key}}: \n              {{~#if (isstring this) ~}}\n                '{{this}}'\n              {{~else~}}\n                {{this}}\n              {{~/if~}},\n            {{~/each}} },\n            {{/each}}\n          ],\n          props: {\n            disabled: this.type === 'view',\n            {{#each props ~}}\n            {{@key}}: {{this}},\n            {{/each}}\n          }\n        },\n        {{~/each}}\n      ]\n    };\n  },\n  mounted() {\n    if (this.type == 'edit') {\n      this.getDetail();\n    } else if (this.type == 'insert') {\n      // TODO: 有需要可以填, 没有可以把这个if删掉\n    } else if (this.type == 'view') {\n      this.getDetail();\n    }\n  },\n  methods: {\n    getDetail() {\n      this.{{api_detail}}(\n        this.$qs.stringify({\n          // TODO: 接口参数\n        })\n      ).then(res => {\n        // TODO: 初始化表单值\n        // this.setFormVlue(res.data);\n      });\n    },\n    submit() {\n      this.fApi.submit((formData, $f) => {\n        // console.log($f, formData, JSON.stringify(formData), 'fapi');\n        if (this.type == 'edit') {\n          this.{{api_edit}}(this.$qs.stringify(formData)).then(res => {\n            this.$message.success(res.msg);\n            this.$emit('confirm', '编辑成功');\n          });\n        } else if (this.type == 'insert') {\n          // console.log(formData);\n          this.{{api_add}}(this.$qs.stringify(formData)).then(res => {\n            this.$message.success(res.msg);\n            this.$emit('confirm', '新增成功');\n          });\n        }\n      });\n    },\n    reset() {\n      this.fApi.resetFields();\n    },\n    ...mapRequest(['{{api_detail}}', '{{api_edit}}', '{{api_add}}'])\n  }\n};\n<\/script>\n";
+}, function(module, exports) {
+    module.exports = {
+        create(content) {
+            let dialog = $('<div class="sw-ui-extend-dialog"></div>'), mask = $('<div class="sw-ui-extend-dialog-mask"></div>'), closeBtn = $('<div class="sw-ui-extend-close-btn">关闭</div>'), confirmBtn = $('<div class="sw-ui-extend-confirm-btn">保存配置并导出</div>'), copyBtn = $('<div class="sw-ui-extend-copy-btn">保存配置并复制到剪贴板</div>');
+            closeBtn.click((function(e) {
+                dialog.css({
+                    transform: "translate3d(-50%, -50%, 0) scale(0)",
+                    opacity: 0
+                }), mask.animate({
+                    opacity: 0
+                }, 400, (function() {
+                    mask.remove();
+                })), setTimeout((() => {
+                    dialog.remove();
+                }), 400);
+            })), dialog.append(closeBtn), dialog.append(content), dialog.append(confirmBtn), 
+            dialog.append(copyBtn);
+            let height = $(window).height(), width = $(window).width();
+            return dialog.css({
+                top: height / 2,
+                left: width / 2,
+                opacity: 0,
+                transition: "all 0.4s",
+                transform: "translate3d(-50%, -50%, 0) scale(0)"
+            }), mask.appendTo("body"), mask.animate({
+                opacity: .5
+            }), dialog.appendTo("body"), dialog.animate({}, (function() {
+                dialog.css({
+                    width: width - 40,
+                    opacity: 1,
+                    transform: "translate3d(-50%, -50%, 0) scale(1)"
+                });
+            })), {
+                confirmBtn: confirmBtn,
+                copyBtn: copyBtn
+            };
+        },
+        paramsConfigDialog(data) {
+            let box = $('<div class="params-config-dialog"></div>'), apiConfigBox = $('<div class="global-params-config"></div>'), addApi = $('<input name="api_add" placeholder="add apiname 定义添加接口名称" />'), editApi = $('<input name="api_edit" placeholder="edit apiname 定义编辑接口名称" />'), detailApi = $('<input name="api_detail" placeholder="detail apiname 定义详情接口名称" />');
+            apiConfigBox.append(addApi), apiConfigBox.append(editApi), apiConfigBox.append(detailApi), 
+            apiConfigBox.appendTo(box);
+            let table = '<table class="params-config-dialog-table">', head = "<thead><tr>";
+            head += [ "field", "title", "required", "组件名称(type)", "默认值(value)", "长度限制(maxlength)", "options", "字典名(dictname)" ].map((th => `<th>${th}</th>`)).join(""), 
+            head += "</tr></thead>", table += head;
+            let body = "<tbody>";
+            body += data.rules.map((item => `<tr>\n        <td>${item.field}<input type="hidden" name="field" value="${item.field}" /></td>\n        <td>${item.title}<input type="hidden" name="title" value="${item.title}" /></td>\n        <td>\n          ${item.required || "false"}\n          <input type="hidden" name="required" value="${item.required || "false"}" />\n        </td>\n        <td><input type="text" value="${item.type}" name="type" placeholder="组件名称(type)" /></td>\n        <td><input type="text" value="${item.value || ""}" name="value" placeholder="默认值" /></td>\n        <td><input type="text" value="${item.maxlength || ""}" name="maxlength" placeholder="长度限制" /></td>\n        <td><textarea value="${item.options && "string" != typeof item.options ? JSON.stringify(item.options) : item.options}" name="options" placeholder="options" /></td>\n        <td><input type="text" value="${item.dictname || ""}" name="dictname" placeholder="字典名(仅select组件可用)" /></td>\n      </tr>`)).join(""), 
+            body += "</tbody>", table += body, $(table).appendTo(box);
+            const {confirmBtn: confirmBtn, copyBtn: copyBtn} = this.create(box);
+            confirmBtn.click((function() {
+                events.confirm();
+            })), copyBtn.click((function() {
+                events.copy();
+            }));
+            let events = {};
+            return {
+                on(type, fn) {
+                    return events[type] = fn, this;
+                }
+            };
+        }
+    };
+}, function(module, exports, __webpack_require__) {
+    const monkey = __webpack_require__(23), message = __webpack_require__(10);
     module.exports = {
         info: (...args) => {
             message.apply(this, args), console.info(`%c[${monkey.header.name}]`, "background:#5bc0de;color: #fff;border: 1px solid #46b8da;padding: 0 5px;border-radius: 4px", ...args);
@@ -409,7 +522,7 @@
         }
     };
 }, function(module, exports, __webpack_require__) {
-    const header = __webpack_require__(21);
+    const header = __webpack_require__(24);
     module.exports.config = {
         entry: "./src/index.js"
     }, module.exports.header = header, module.exports.buildedHeader = () => {
@@ -424,18 +537,18 @@
 }, function(module, exports) {
     module.exports = new class {
         constructor() {
-            this.name = "SwaggerUI Extends", this.version = "1.0.1", this.namespace = "swagger-ui", 
+            this.name = "SwaggerUI Extends", this.version = "1.0.2", this.namespace = "swagger-ui", 
             this.description = "扩展SwaggerUI搜索功能|导出Api Config配置|导出Table Config配置|导出Form Config配置", 
             this.author = "hucy", this.match = [ "http*://*/*/swagger-ui.html", "http*://*/swagger-ui.html" ], 
-            this.require = [ "https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.20/lodash.min.js", "https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js" ], 
+            this.require = [ "https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.20/lodash.min.js", "https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js", "https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js" ], 
             this.grant = [ "GM_addStyle", "GM_setValue", "GM_getValue", "GM_setClipboard" ];
         }
     };
 }, function(module, __webpack_exports__, __webpack_require__) {
     "use strict";
     __webpack_require__.r(__webpack_exports__);
-    var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(23), ___CSS_LOADER_EXPORT___ = __webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__)()(!1);
-    ___CSS_LOADER_EXPORT___.push([ module.i, ".topbar{position:fixed;top:0;left:0;right:0;z-index:9999}.swagger-ui{padding-top:60px}.swagger-ui .topbar .topbar-wrapper{justify-content:space-between}.swagger-ui .opblock .opblock-summary-description{margin-left:10px}.op-btn{position:fixed;top:160px;right:20px;width:160px;height:40px;line-height:40px;text-align:center;background:#add8e6;cursor:pointer;border-radius:8px}.op-btn:hover{opacity:.8}.message{position:fixed;top:50px;background:#add8e6;padding:10px;left:50%;-ms-transform:translateX(-50%);transform:translateX(-50%)}#search-input{height:40px;width:400px}.search-result{position:fixed;top:50px;left:0;width:240px;padding:0 15px;box-shadow:0 0 10px #444;background:#fff;opacity:.5;transition:all .3s}.search-result:hover{opacity:1}.search-result-item{cursor:pointer;padding:10px 0;margin:0}.search-result-item:hover{background:#eee}.svg-button{background-color:#909399;color:#f4f4f5;display:inline-flex;height:32px;width:auto;position:relative;cursor:pointer}.svg-button:hover{background-color:#f4f4f5;color:#909399}.svg-button+.svg-button{margin-left:10px}.svg-button svg{width:100%;height:32px;position:absolute;top:0;left:0;right:0;bottom:0}.svg-button .svg-text{padding:0 20px;line-height:32px;transition:all .4s;font-size:14px;font-family:Comic Sans MS,Courier New,Microsoft YaHei,monospace}.svg-button:hover .svg-text{color:#8679f7}.svg-button .border{width:100%;height:100%;fill:none;stroke-width:2px;stroke:#909399;transition:all .6s cubic-bezier(.23,1,.32,1)}.svg-button:hover .border{stroke:#8679f7;stroke-width:2px}.tm-message{position:fixed;right:20px;background:#333;color:#ee0;border-radius:4px;padding:10px;font-size:16px;line-height:1.2em;min-height:2.4em;min-width:16em;box-shadow:0 0 10px #b9b9b9;z-index:8000}.opblock-extend-btns{padding-left:10px;padding-top:8px;padding-bottom:10px}.opblock-extend-btns input{height:32px}", "" ]), 
+    var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(26), ___CSS_LOADER_EXPORT___ = __webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0__)()(!1);
+    ___CSS_LOADER_EXPORT___.push([ module.i, ".topbar{position:fixed;top:0;left:0;right:0;z-index:9999}.swagger-ui{padding-top:60px}.swagger-ui .topbar .topbar-wrapper{justify-content:space-between}.swagger-ui .opblock .opblock-summary-description{margin-left:10px}.op-btn{position:fixed;top:160px;right:20px;width:160px;height:40px;line-height:40px;text-align:center;background:#add8e6;cursor:pointer;border-radius:8px}.op-btn:hover{opacity:.8}.message{position:fixed;top:50px;background:#add8e6;padding:10px;left:50%;-ms-transform:translateX(-50%);transform:translateX(-50%)}#search-input{height:40px;width:400px}.search-result{position:fixed;top:50px;left:0;width:240px;padding:0 15px;box-shadow:0 0 10px #444;background:#fff;opacity:.5;transition:all .3s}.search-result:hover{opacity:1}.search-result-item{cursor:pointer;padding:10px 0;margin:0}.search-result-item:hover{background:#eee}.svg-button{background-color:#909399;color:#f4f4f5;display:inline-flex;height:32px;width:auto;position:relative;cursor:pointer}.svg-button:hover{background-color:#f4f4f5;color:#909399}.svg-button+.svg-button{margin-left:10px}.svg-button svg{width:100%;height:32px;position:absolute;top:0;left:0;right:0;bottom:0}.svg-button .svg-text{padding:0 20px;line-height:32px;transition:all .4s;font-size:14px;font-family:Comic Sans MS,Courier New,Microsoft YaHei,monospace}.svg-button:hover .svg-text{color:#8679f7}.svg-button .border{width:100%;height:100%;fill:none;stroke-width:2px;stroke:#909399;transition:all .6s cubic-bezier(.23,1,.32,1)}.svg-button:hover .border{stroke:#8679f7;stroke-width:2px}.tm-message{position:fixed;right:20px;background:#333;color:#ee0;border-radius:4px;padding:10px;font-size:16px;line-height:1.2em;min-height:2.4em;min-width:16em;box-shadow:0 0 10px #b9b9b9;z-index:8000}.opblock-extend-btns{padding-left:10px;padding-top:8px;padding-bottom:10px}.opblock-extend-btns input{height:32px}.sw-ui-extend-dialog{position:fixed;background-color:#fff;padding:20px 20px 70px;max-height:700px;min-height:300px;max-width:100%;min-width:80%;overflow:auto;box-shadow:0 0 10px #333;border-radius:10px;transform:translate3d(-50%,-50%,0)}.sw-ui-extend-dialog-mask{position:fixed;top:0;left:0;right:0;bottom:0;background-color:#000;opacity:0}.sw-ui-extend-close-btn{position:absolute;right:10px;top:10px;cursor:pointer;color:#61affe}.sw-ui-extend-close-btn:hover{opacity:.8}.sw-ui-extend-confirm-btn,.sw-ui-extend-copy-btn{padding:5px 10px;background-color:#61affe;color:#fff;position:absolute;bottom:20px;cursor:pointer}.sw-ui-extend-confirm-btn:hover,.sw-ui-extend-copy-btn:hover{opacity:.8}.sw-ui-extend-confirm-btn{right:20px}.sw-ui-extend-copy-btn{right:180px}.params-config-dialog{width:100%;height:100%;overflow:auto}.params-config-dialog input{padding-left:10px;height:32px;line-height:32px;margin-right:10px;width:220px}.global-params-config{margin-bottom:10px}.params-config-dialog-table{border-top:1px solid #b9b9b9;border-collapse:collapse}.params-config-dialog-table tr:nth-child(2n){background-color:#e1ffff}.params-config-dialog-table tr:hover{background-color:rgba(97,175,254,.1)}.params-config-dialog-table td,.params-config-dialog-table th{font-size:14px;text-align:left;padding:5px 10px;border-bottom:1px solid #b9b9b9;vertical-align:top;line-height:32px}", "" ]), 
     __webpack_exports__.default = ___CSS_LOADER_EXPORT___;
 }, function(module, exports, __webpack_require__) {
     "use strict";
