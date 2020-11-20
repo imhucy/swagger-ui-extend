@@ -2,7 +2,7 @@ const find = require('../utils/find');
 const message = require('../utils/message');
 const cache = require('../cache');
 
-module.exports = {
+var that = {
   onCopyApiConfig: function onCopyApiConfig(path) {
     return function (e) {
       e.stopPropagation();
@@ -10,7 +10,7 @@ module.exports = {
       let item = find.byPath(path);
       console.log('path', path);
       console.log(item);
-      let content = getApiConfig(path);
+      let content = that.getApiConfig(path);
       GM_setClipboard(content);
 
       message('已复制<br>' + content.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;'));
@@ -19,7 +19,7 @@ module.exports = {
   getApiConfig: function getApiConfig(path) {
     let item = find.byPath(path);
     let method = item.method;
-    let name = cache.get(path) || getName(path);
+    let name = cache.get(path) || that.getName(path);
     return `
 // @desc ${item.summary}
 // @desc ${item.tags.join('')}
@@ -47,3 +47,4 @@ ${JSON.stringify(
     return one + two[0].toUpperCase() + two.substr(1);
   }
 };
+module.exports = that;
